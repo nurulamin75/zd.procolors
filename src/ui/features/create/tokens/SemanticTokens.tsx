@@ -110,7 +110,7 @@ export const SemanticTokens: React.FC<SemanticTokensProps> = ({
   const aliasOptions = getAliasOptions();
 
   return (
-    <div className="section-card" style={{ padding: '20px 20px 8px 20px', marginBottom: 0 }}>
+    <div className="section-card" style={{ padding: '4px 20px 8px 20px', marginBottom: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',}}>
         <div>
           <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>

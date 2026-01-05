@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ColorToken } from '../../../../utils/tokens';
+import { Check } from 'lucide-react';
 import { 
   formatJSON, 
   formatCSS, 
@@ -18,6 +19,7 @@ interface AdvancedExportProps {
 export const AdvancedExport: React.FC<AdvancedExportProps> = ({ palettes }) => {
   const [namingStyle, setNamingStyle] = useState<'simple' | 'tailwind' | 'material' | 'radix'>('simple');
   const [selectedFormat, setSelectedFormat] = useState<string | null>(null);
+  const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
 
   const handleExport = async (type: string) => {
     setSelectedFormat(type);
@@ -67,8 +69,12 @@ export const AdvancedExport: React.FC<AdvancedExportProps> = ({ palettes }) => {
 
       if (shouldCopy) {
         await copyToClipboard(content);
+        setCopiedFormat(type);
         // Show a brief visual feedback
-        setTimeout(() => setSelectedFormat(null), 1000);
+        setTimeout(() => {
+          setSelectedFormat(null);
+          setCopiedFormat(null);
+        }, 2000);
       } else {
         downloadFile(content, filename, mimeType);
         // Reset selection after download
@@ -116,22 +122,30 @@ export const AdvancedExport: React.FC<AdvancedExportProps> = ({ palettes }) => {
               onClick={() => handleExport('css')}
               style={{ 
                 position: 'relative',
-                border: selectedFormat === 'css' ? '2px solid var(--color-primary)' : undefined,
-                opacity: selectedFormat === 'css' ? 0.8 : 1
+                border: copiedFormat === 'css' ? '2px solid #10b981' : selectedFormat === 'css' ? '2px solid var(--color-primary)' : undefined,
+                background: copiedFormat === 'css' ? '#ecfdf5' : undefined,
               }}
             >
-              CSS Variables
+              {copiedFormat === 'css' ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+                  <Check size={16} color="#10b981" /> Copied!
+                </span>
+              ) : 'CSS Variables'}
             </button>
             <button 
               className="btn btn-secondary" 
               onClick={() => handleExport('tailwind')}
               style={{ 
                 position: 'relative',
-                border: selectedFormat === 'tailwind' ? '2px solid var(--color-primary)' : undefined,
-                opacity: selectedFormat === 'tailwind' ? 0.8 : 1
+                border: copiedFormat === 'tailwind' ? '2px solid #10b981' : selectedFormat === 'tailwind' ? '2px solid var(--color-primary)' : undefined,
+                background: copiedFormat === 'tailwind' ? '#ecfdf5' : undefined,
               }}
             >
-              Tailwind Config
+              {copiedFormat === 'tailwind' ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+                  <Check size={16} color="#10b981" /> Copied!
+                </span>
+              ) : 'Tailwind Config'}
             </button>
             <button 
               className="btn btn-secondary" 

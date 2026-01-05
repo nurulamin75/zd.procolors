@@ -16,6 +16,7 @@ interface GeneratorPageProps {
   customColors?: Record<string, string>;
   onAddCustomColor?: (name: string, color: string) => void;
   onDeleteCustomColor?: (name: string) => void;
+  onRenameColor?: (oldName: string, newName: string) => void;
 }
 
 export const GeneratorPage: React.FC<GeneratorPageProps> = ({
@@ -28,17 +29,18 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
   onUpdateScale,
   customColors,
   onAddCustomColor,
-  onDeleteCustomColor
+  onDeleteCustomColor,
+  onRenameColor
 }) => {
   const [activeTab, setActiveTab] = useState<'manual' | 'harmony' | 'extract'>('manual');
 
   const handleApplyHarmony = (colors: string[]) => {
     const targets = ['primary', 'secondary', 'neutral', 'info', 'success', 'warning', 'error'];
-    
+
     colors.forEach((color, index) => {
-        if (index < targets.length) {
-            onColorChange(targets[index], color);
-        }
+      if (index < targets.length) {
+        onColorChange(targets[index], color);
+      }
     });
 
     setActiveTab('manual');
@@ -48,13 +50,13 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
         {/* Tabs on the Left */}
-        <div style={{ 
+        <div style={{
           // background: 'var(--color-bg-hover)', 
           // padding: '6px', 
           // borderRadius: '100px', 
           // border: '0.25px solid #e6e6e6',
-          display: 'flex', 
-          gap: '4px' 
+          display: 'flex',
+          gap: '4px'
         }}>
           <button
             onClick={() => setActiveTab('manual')}
@@ -123,7 +125,7 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
       </div>
 
       {activeTab === 'manual' ? (
-        <ManualGenerator 
+        <ManualGenerator
           primaryColor={primaryColor}
           semanticColors={semanticColors}
           allPalettes={allPalettes}
@@ -134,11 +136,12 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
           customColors={customColors}
           onAddCustomColor={onAddCustomColor}
           onDeleteCustomColor={onDeleteCustomColor}
+          onRenameColor={onRenameColor}
         />
       ) : activeTab === 'harmony' ? (
         <HarmonyPanel onApply={handleApplyHarmony} />
       ) : (
-        <ImageExtractor 
+        <ImageExtractor
           onColorSelect={onColorChange}
           onApplyColors={(colors) => {
             // Apply extracted colors to available color slots

@@ -25,8 +25,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ palettes }) => {
   return (
     <div className="animate-fade-in" style={{ width: '100%', maxWidth: '100%' }}>
       <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+        display: 'flex', 
+        flexDirection: 'column', 
         gap: '20px',
         paddingBottom: '40px',
         width: '100%',

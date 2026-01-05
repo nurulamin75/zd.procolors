@@ -32,6 +32,9 @@ export const MultiModeTokens: React.FC<MultiModeTokensProps> = ({
   const [customColors, setCustomColors] = useState<string[]>([]);
   const [showPresets, setShowPresets] = useState(false);
   const [createSemanticTokens, setCreateSemanticTokens] = useState(true);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [collections, setCollections] = useState<Array<{ id: string; name: string }>>([]);
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false);
   
   // Advanced adjustments
   const [darkModeShift, setDarkModeShift] = useState({ hue: 0, saturation: 0, lightness: 0 });
@@ -225,15 +228,56 @@ export const MultiModeTokens: React.FC<MultiModeTokensProps> = ({
     return semanticTokens;
   };
 
+  const loadCollections = async () => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.pluginMessage?.type === 'target-options-response' && event.data.pluginMessage.targetType === 'variables') {
+        const options = event.data.pluginMessage.options || [];
+        const collectionsList = options.map((opt: any) => ({
+          id: opt.value || opt.id,
+          name: opt.label || opt.name
+        }));
+        
+        setCollections(collectionsList);
+        window.removeEventListener('message', handleMessage);
+        setIsLoadingCollections(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    setIsLoadingCollections(true);
+    try {
+      (window as any).parent.postMessage({ pluginMessage: { type: 'get-target-options', targetType: 'variables' } }, '*');
+    } catch (err) {
+      console.error('Error loading collections:', err);
+      window.removeEventListener('message', handleMessage);
+      setIsLoadingCollections(false);
+    }
+  };
+
   const handleCreateInFigma = () => {
     if (Object.keys(modeTokens).length === 0) {
       alert('Please generate mode tokens first!');
       return;
     }
 
+    // Show collection selection modal
+    loadCollections();
+    setShowCollectionModal(true);
+  };
+
+  const handleCollectionSelect = (collectionId: string | undefined, createNew: boolean) => {
+    setShowCollectionModal(false);
+    
+    // Proceed with creation
+    setTimeout(() => {
+      createModeVariables(collectionId, createNew);
+    }, 50);
+  };
+
+  const createModeVariables = (collectionId: string | undefined, createNew: boolean) => {
     setIsCreating(true);
     const timestamp = new Date().toLocaleString('en-GB', { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
-    const collectionName = `Multi-Mode Tokens (${timestamp})`;
+    const collectionName = createNew ? `Multi-Mode Tokens (${timestamp})` : undefined;
 
     let semanticTokensByMode: Record<string, ModeToken[]> | undefined;
     if (createSemanticTokens) {
@@ -246,6 +290,8 @@ export const MultiModeTokens: React.FC<MultiModeTokensProps> = ({
         modeTokensByMode: modeTokens,
         semanticTokensByMode: semanticTokensByMode,
         collectionName: collectionName,
+        collectionId: createNew ? undefined : collectionId,
+        createNewCollection: createNew,
         createSemanticTokens: createSemanticTokens
       }
     }, '*');
@@ -337,7 +383,7 @@ export const MultiModeTokens: React.FC<MultiModeTokensProps> = ({
   }, [modeTokens, selectedMode, bgColor]);
 
   return (
-    <div className="section-card" style={{ padding: '24px 24px 8px 24px', marginBottom: 0 }}>
+    <div className="section-card" style={{ padding: '4px 24px 8px 24px', marginBottom: 0 }}>
       {/* Header */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
@@ -812,6 +858,105 @@ export const MultiModeTokens: React.FC<MultiModeTokensProps> = ({
         >
           {isCreating ? 'Creating...' : 'Create in Figma'}
         </button>
+      )}
+
+      {/* Collection Selection Modal */}
+      {showCollectionModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+          }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>
+              Choose Collection
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '20px' }}>
+              Select an existing collection to add modes, or create a new one.
+            </p>
+
+            {/* Create New Collection Option */}
+            <button
+              onClick={() => handleCollectionSelect(undefined, true)}
+              className="btn btn-primary"
+              style={{
+                width: '100%',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '12px'
+              }}
+            >
+              <Plus size={18} />
+              Create New Collection
+            </button>
+
+            {/* Existing Collections */}
+            {isLoadingCollections ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-secondary)' }}>
+                Loading collections...
+              </div>
+            ) : collections.length > 0 ? (
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px', color: 'var(--color-text-secondary)' }}>
+                  OR ADD TO EXISTING COLLECTION:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+                  {collections.map((collection) => (
+                    <button
+                      key={collection.id}
+                      onClick={() => handleCollectionSelect(collection.id, false)}
+                      className="btn btn-secondary"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        textAlign: 'left',
+                        justifyContent: 'flex-start'
+                      }}
+                    >
+                      {collection.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '20px', 
+                color: 'var(--color-text-secondary)',
+                fontSize: '13px'
+              }}>
+                No existing collections found. Create a new one to get started.
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowCollectionModal(false)}
+              className="btn btn-secondary"
+              style={{ width: '100%', marginTop: '16px' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Token Display */}

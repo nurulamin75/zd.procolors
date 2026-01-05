@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { HexColorPicker } from 'react-colorful';
-import { X } from 'lucide-react';
+import { X, Pencil } from 'lucide-react';
 import { isValidColor } from '../../utils/color';
 
 interface ColorInputProps {
@@ -11,12 +11,27 @@ interface ColorInputProps {
   last?: boolean;
   isCustom?: boolean;
   onDelete?: () => void;
+  onNameChange?: (newName: string) => void;
+  canDelete?: boolean;
+  canRename?: boolean;
 }
 
-export const ColorInput: React.FC<ColorInputProps> = ({ value, onChange, label = "Brand Color", isCustom = false, onDelete }) => {
-  const [showDelete, setShowDelete] = useState(false);
+export const ColorInput: React.FC<ColorInputProps> = ({ 
+  value, 
+  onChange, 
+  label = "Brand Color", 
+  isCustom = false, 
+  onDelete,
+  onNameChange,
+  canDelete = false,
+  canRename = false
+}) => {
+  const [showActions, setShowActions] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(label);
   const cardRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [inputText, setInputText] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
@@ -25,6 +40,19 @@ export const ColorInput: React.FC<ColorInputProps> = ({ value, onChange, label =
   useEffect(() => {
     setInputText(value);
   }, [value]);
+
+  // Sync nameInput with label prop
+  useEffect(() => {
+    setNameInput(label);
+  }, [label]);
+
+  // Focus name input when editing starts
+  useEffect(() => {
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [isEditingName]);
 
   // Calculate popover position when opening
   useEffect(() => {
@@ -70,11 +98,41 @@ export const ColorInput: React.FC<ColorInputProps> = ({ value, onChange, label =
 
   // Trigger color picker when clicking card, unless clicking the text input
   const handleCardClick = (e: React.MouseEvent) => {
-    // Check if click target is the text input
+    // Check if click target is the text input or if editing name
     if ((e.target as HTMLElement).tagName === 'INPUT' && (e.target as HTMLInputElement).type === 'text') {
       return;
     }
+    if (isEditingName) {
+      return;
+    }
     setIsOpen(!isOpen);
+  };
+
+  const handleNameEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (canRename) {
+      setIsEditingName(true);
+    }
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNameInput(e.target.value);
+  };
+
+  const handleNameSubmit = () => {
+    if (nameInput.trim() && onNameChange) {
+      onNameChange(nameInput.trim());
+    }
+    setIsEditingName(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleNameSubmit();
+    } else if (e.key === 'Escape') {
+      setNameInput(label);
+      setIsEditingName(false);
+    }
   };
 
   return (
@@ -83,8 +141,8 @@ export const ColorInput: React.FC<ColorInputProps> = ({ value, onChange, label =
         ref={cardRef}
         className="color-card" 
         onClick={handleCardClick}
-        onMouseEnter={() => isCustom && setShowDelete(true)}
-        onMouseLeave={() => setShowDelete(false)}
+        onMouseEnter={() => (canDelete || canRename) && setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
         style={{
             position: 'relative',
             backgroundColor: 'white',
@@ -100,42 +158,78 @@ export const ColorInput: React.FC<ColorInputProps> = ({ value, onChange, label =
             marginBottom: '8px',
         }}
       >
-        {/* Delete Button for Custom Colors */}
-        {isCustom && onDelete && showDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              backgroundColor: '#ef4444',
-              border: 'none',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              zIndex: 10,
-              transition: 'all 0.2s',
-              padding: 0
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#dc2626';
-              e.currentTarget.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#ef4444';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <X size={12} />
-          </button>
+        {/* Action Buttons */}
+        {showActions && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            display: 'flex',
+            gap: '4px',
+            zIndex: 10
+          }}>
+            {canRename && onNameChange && (
+              <button
+                onClick={handleNameEdit}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  backgroundColor: '#3b82f6',
+                  border: 'none',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  padding: 0
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2563eb';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#3b82f6';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <Pencil size={11} />
+              </button>
+            )}
+            {canDelete && onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ef4444',
+                  border: 'none',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  padding: 0
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dc2626';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ef4444';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
         )}
 
         {/* Color Swatch */}
@@ -150,20 +244,49 @@ export const ColorInput: React.FC<ColorInputProps> = ({ value, onChange, label =
             outline: '1px solid var(--color-border-light)'
         }}></div>
 
-        {/* Label */}
-        <div style={{
-            fontSize: '13px',
-            fontWeight: 600,
-            color: 'var(--color-text-primary)',
-            marginBottom: '6px',
-            textAlign: 'center',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            maxWidth: '100%'
-        }}>
+        {/* Label - Editable or Static */}
+        {isEditingName ? (
+          <input
+            ref={nameInputRef}
+            type="text"
+            value={nameInput}
+            onChange={handleNameChange}
+            onBlur={handleNameSubmit}
+            onKeyDown={handleNameKeyDown}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: 'var(--color-text-primary)',
+              marginBottom: '6px',
+              textAlign: 'center',
+              width: '100%',
+              border: '1px solid var(--color-primary)',
+              borderRadius: '4px',
+              padding: '2px 4px',
+              outline: 'none',
+              backgroundColor: 'var(--color-primary-light)'
+            }}
+          />
+        ) : (
+          <div 
+            onClick={canRename ? handleNameEdit : undefined}
+            style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: 'var(--color-text-primary)',
+              marginBottom: '6px',
+              textAlign: 'center',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '100%',
+              cursor: canRename ? 'text' : 'inherit'
+            }}
+          >
             {label}
-        </div>
+          </div>
+        )}
 
         {/* Editable Hex Input */}
         <input

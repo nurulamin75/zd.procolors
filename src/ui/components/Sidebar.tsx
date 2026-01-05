@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { 
+import React, { useState, useRef, useEffect } from 'react';
+import {
   LayoutGrid, SplitSquareHorizontal,
-  Palette, Gauge, Eye, CheckCircle2, ScanEye, 
-  RefreshCw, Download, Layers, FolderUp, Compass,
+  Palette, Gauge, Eye, CheckCircle2, ScanEye,
+  Download, Layers, FolderUp, Compass,
   ChevronDown, ChevronRight, Settings,
   PlusCircle, Globe, ArrowRightLeft, FlaskConical,
-  PanelRightOpen, Sparkles
+  PanelRightOpen, Sparkles, Building2,
+  Blend, Spline, Droplets, FileCode, BookOpen,
+  SwatchBook, Pipette, BarChart3, Thermometer
 } from 'lucide-react';
 import logo from '../logo.png';
 import markIcon from '../mark.png';
@@ -21,10 +23,11 @@ const NAV_STRUCTURE = [
     label: 'Create',
     icon: PlusCircle,
     items: [
-      { id: 'generator', label: 'Shades', icon: LayoutGrid },
+      { id: 'generator', label: 'Shades', icon: SwatchBook },
       { id: 'tokens', label: 'Tokens', icon: Sparkles },
       { id: 'themes', label: 'Themes', icon: Layers },
-      { id: 'brands', label: 'Multi Brand', icon: SplitSquareHorizontal },
+      { id: 'mesh-gradient', label: 'Mesh Gradient', icon: Gauge },
+      { id: 'color-ops', label: 'Color Ops', icon: Blend },
     ]
   },
   {
@@ -32,8 +35,9 @@ const NAV_STRUCTURE = [
     label: 'Explore',
     icon: Globe,
     items: [
-      { id: 'palettes', label: 'Palettes', icon: Compass },
-      { id: 'gradients', label: 'Gradients', icon: Palette },
+      { id: 'brand-colors', label: 'Brand Colors', icon: Building2 },
+      { id: 'palettes', label: 'Color Palettes', icon: Palette },
+      { id: 'gradients', label: 'Gradients', icon: Compass },
     ]
   },
   {
@@ -42,9 +46,10 @@ const NAV_STRUCTURE = [
     icon: ArrowRightLeft,
     items: [
       { id: 'transfer', label: 'Transfer tokens', icon: FolderUp },
+      { id: 'brands', label: 'Manage Brands', icon: SplitSquareHorizontal },
       { id: 'export', label: 'Export tokens', icon: Download },
-      { id: 'replacer', label: 'Replace Colors', icon: RefreshCw },
-      { id: 'extractor', label: 'Color Migrator', icon: ScanEye },
+      { id: 'documentation', label: 'Documentation', icon: BookOpen },
+      { id: 'extractor', label: 'Color Migrator', icon: Pipette },
     ]
   },
   {
@@ -55,7 +60,7 @@ const NAV_STRUCTURE = [
       { id: 'preview', label: 'Preview', icon: Eye },
       { id: 'contrast', label: 'Checker', icon: CheckCircle2 },
       { id: 'blindness', label: 'Simulator', icon: ScanEye },
-      { id: 'heatmap', label: 'Heatmap', icon: Gauge },
+      { id: 'heatmap', label: 'Heatmap', icon: Thermometer },
     ]
   },
   {
@@ -67,7 +72,7 @@ const NAV_STRUCTURE = [
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [submenuPosition, setSubmenuPosition] = useState<{ top: number; left: number } | null>(null);
   const menuItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -78,6 +83,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
     test: false,
     settings: false
   });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // If we're clicking outside the sidebar and submenus, close the hovered group
+      if (
+        isCollapsed &&
+        hoveredGroup &&
+        !target.closest('.sidebar') &&
+        !target.closest('[data-submenu]')
+      ) {
+        setHoveredGroup(null);
+        setSubmenuPosition(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isCollapsed, hoveredGroup]);
 
   const toggleGroup = (id: string) => {
     setGroupStates(prev => {
@@ -91,21 +115,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
       Object.keys(prev).forEach(key => {
         newState[key] = key === id;
       });
-      
+
       // When opening a group, automatically select the first item
       const group = NAV_STRUCTURE.find(g => g.id === id);
       if (group && group.items.length > 0) {
         onChangeModule(group.items[0].id);
       }
-      
+
       return newState;
     });
   };
 
   return (
-    <div 
+    <div
       className="sidebar"
-      style={{ 
+      style={{
         width: isCollapsed ? '64px' : '172px',
         transition: 'width 0.2s ease',
         overflow: isCollapsed ? 'visible' : undefined,
@@ -114,10 +138,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
         position: 'relative'
       }}
     >
-      <div style={{ 
-        padding: '16px 8px', 
-        display: 'flex', 
-        alignItems: 'center', 
+      <div style={{
+        padding: '16px 8px',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: isCollapsed ? 'center' : 'space-between',
         position: 'sticky',
         top: 0,
@@ -127,18 +151,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
         marginTop: '2px'
       }}>
         {isCollapsed ? (
-          <img 
-            src={markIcon} 
-            alt="ProColors" 
+          <img
+            src={markIcon}
+            alt="ProColors"
             style={{ height: '28px', width: '28px', objectFit: 'contain', cursor: 'pointer' }}
             onClick={() => setIsCollapsed(false)}
           />
         ) : (
           <>
-            <img 
-              src={logo} 
-              alt="ProColors Logo" 
-              style={{ height: '26px', objectFit: 'contain' }} 
+            <img
+              src={logo}
+              alt="ProColors Logo"
+              style={{ height: '26px', objectFit: 'contain' }}
             />
             <button
               onClick={() => setIsCollapsed(true)}
@@ -167,12 +191,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
           </>
         )}
       </div>
-      
+
       {/* Submenu portal for collapsed sidebar */}
       {isCollapsed && hoveredGroup && submenuPosition && (() => {
         const group = NAV_STRUCTURE.find(g => g.id === hoveredGroup);
         if (!group || group.id === 'settings' || group.items.length === 0) return null;
-        
+
         return (
           <div
             data-submenu
@@ -193,11 +217,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
               pointerEvents: 'auto'
             }}
             onMouseEnter={() => {
-              setHoveredGroup(hoveredGroup);
+              // Stay open
             }}
             onMouseLeave={() => {
-              setHoveredGroup(null);
-              setSubmenuPosition(null);
+              // Stay open until click outside or hover another module
             }}
           >
             <div style={{
@@ -214,6 +237,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
             </div>
             {group.items.map((item) => {
               const isActive = activeModule === item.id;
+              const ItemIcon = item.icon;
               return (
                 <div
                   key={item.id}
@@ -230,7 +254,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
                     color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                     backgroundColor: isActive ? '#f3f4f6' : 'transparent',
                     borderRadius: '6px',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -243,6 +270,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
                     }
                   }}
                 >
+                  {ItemIcon && <ItemIcon size={14} />}
                   {item.label}
                 </div>
               );
@@ -250,11 +278,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
           </div>
         );
       })()}
-      
-      <div 
-        style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
           gap: '4px',
           position: 'relative',
           overflow: isCollapsed ? 'visible' : undefined
@@ -269,12 +297,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
           if (isCollapsed) {
             // Collapsed view: show only icons with hover submenu
             return (
-              <div 
-                key={group.id} 
+              <div
+                key={group.id}
                 ref={(el) => {
                   menuItemRefs.current[group.id] = el;
                 }}
-                style={{ 
+                style={{
                   marginBottom: '4px',
                   position: 'relative'
                 }}
@@ -289,16 +317,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
                     });
                   }
                 }}
-                onMouseLeave={(e) => {
-                  // Only clear if we're not moving to the submenu
-                  const relatedTarget = e.relatedTarget as HTMLElement;
-                  if (!relatedTarget || !relatedTarget.closest('[data-submenu]')) {
-                    setHoveredGroup(null);
-                    setSubmenuPosition(null);
-                  }
+                onMouseLeave={() => {
+                  // No longer clearing on mouse leave to allow "sticky" behavior
+                  // as requested by the user.
                 }}
               >
-                <div 
+                <div
                   onClick={() => {
                     if (isSettings) {
                       onChangeModule('settings');
@@ -348,7 +372,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
           return (
             <div key={group.id} style={{ marginBottom: '4px' }}>
               {/* Group Header */}
-              <div 
+              <div
                 onClick={() => isSettings ? onChangeModule('settings') : toggleGroup(group.id)}
                 style={{
                   display: 'flex',
@@ -386,10 +410,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
 
               {/* Group Items */}
               {isOpen && !isSettings && (
-                <div style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: '0px', 
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0px',
                   paddingLeft: '4px',
                   position: 'relative',
                   marginLeft: '16px', // Space for icon + gap
@@ -398,9 +422,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
                 }}>
                   {group.items.map((item) => {
                     const isActive = activeModule === item.id;
-                    
+
                     return (
-                      <div 
+                      <div
                         key={item.id}
                         onClick={() => onChangeModule(item.id)}
                         style={{

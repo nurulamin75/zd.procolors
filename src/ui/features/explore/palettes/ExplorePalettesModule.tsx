@@ -62,7 +62,8 @@ export const ExplorePalettesModule: React.FC = () => {
         display: 'flex',
         height: '100%',
         width: '100%',
-        overflow: 'hidden' 
+        overflow: 'hidden',
+        gap: '16px'
     }}>
       {/* Main Content Area */}
       <div className="no-scrollbar" style={{ 

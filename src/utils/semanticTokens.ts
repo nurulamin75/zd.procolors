@@ -297,61 +297,61 @@ export function generateModeToken(
   mode: 'light' | 'dark' | 'high-contrast',
   bgColor?: string
 ): ModeToken {
+  console.log(`generateModeToken called for ${tokenName} in ${mode} mode, base color: ${baseToken.value}`);
+  
   const base = chroma(baseToken.value);
   let adjusted = base;
   
   if (mode === 'dark') {
     // For dark mode, invert the luminance intelligently
+    const [h, s, l] = base.hsl();
     const luminance = base.luminance();
     
+    console.log(`Dark mode - Original HSL: [${h}, ${s}, ${l}], luminance: ${luminance}`);
+    
+    let newL;
     if (luminance > 0.5) {
       // Light colors become darker
-      adjusted = chroma.hsl(
-        base.get('hsl.h'),
-        Math.min(1, base.get('hsl.s') * 1.2), // Slightly more saturated
-        0.15 + (luminance * 0.2) // Map to darker range
-      );
+      newL = 0.15 + (luminance * 0.2); // Map to darker range
     } else {
-      // Dark colors become lighter
-      adjusted = chroma.hsl(
-        base.get('hsl.h'),
-        Math.max(0, base.get('hsl.s') * 0.9), // Slightly less saturated
-        0.7 + (luminance * 0.3) // Map to lighter range
-      );
+      // Dark colors become lighter  
+      newL = 0.7 + (luminance * 0.3); // Map to lighter range
     }
+    
+    adjusted = chroma.hsl(h, Math.min(1, s * 1.1), newL);
+    console.log(`Dark mode - New HSL: [${h}, ${Math.min(1, s * 1.1)}, ${newL}], result: ${adjusted.hex()}`);
+    
   } else if (mode === 'high-contrast') {
     // Increase contrast significantly
-    const bg = bgColor ? chroma(bgColor) : chroma('#ffffff');
-    const contrast = getContrast(base.hex(), bg.hex());
+    const [h, s, l] = base.hsl();
+    const luminance = base.luminance();
     
-    if (contrast < 7) {
-      // Need to increase contrast to meet WCAG AAA
-      const luminance = base.luminance();
-      if (luminance > 0.5) {
-        // Lighten if already lighter
-        adjusted = chroma.hsl(
-          base.get('hsl.h'),
-          base.get('hsl.s'),
-          Math.min(0.95, luminance + 0.3)
-        );
-      } else {
-        // Darken if already darker
-        adjusted = chroma.hsl(
-          base.get('hsl.h'),
-          Math.min(1, base.get('hsl.s') * 1.2),
-          Math.max(0.05, luminance - 0.3)
-        );
-      }
+    console.log(`High contrast - Original HSL: [${h}, ${s}, ${l}], luminance: ${luminance}`);
+    
+    let newL;
+    if (luminance > 0.5) {
+      // Make very light
+      newL = Math.min(0.98, l + 0.4);
+    } else {
+      // Make very dark
+      newL = Math.max(0.02, l - 0.4);
     }
+    
+    adjusted = chroma.hsl(h, Math.min(1, s * 1.2), newL);
+    console.log(`High contrast - New HSL: [${h}, ${Math.min(1, s * 1.2)}, ${newL}], result: ${adjusted.hex()}`);
   }
   // Light mode uses base color
   
-  return {
+  const result = {
     name: tokenName,
     mode,
     value: adjusted.hex(),
     baseValue: baseToken.value
   };
+  
+  console.log(`generateModeToken result for ${tokenName} in ${mode}:`, result.value);
+  
+  return result;
 }
 
 // Helper to invert shade for dark mode

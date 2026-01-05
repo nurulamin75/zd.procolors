@@ -41,7 +41,7 @@ export const TokenManager: React.FC<TokenManagerProps> = ({
     { id: 'brand-product' as TokenView, label: 'Brand/Product', icon: Layers },
     { id: 'usage' as TokenView, label: 'Usage Scanner', icon: ScanEye },
     { id: 'health' as TokenView, label: 'Health', icon: BarChart3 },
-    { id: 'versioning' as TokenView, label: 'Versioning', icon: BookOpen },
+    // { id: 'versioning' as TokenView, label: 'Versioning', icon: BookOpen }, // Temporarily removed
     { id: 'export' as TokenView, label: 'Export', icon: Layers }
   ];
 
@@ -62,7 +62,7 @@ export const TokenManager: React.FC<TokenManagerProps> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', margin: '-24px' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', margin: '0px' }}>
       {showWizard ? (
         <TokenWizard
           onComplete={handleWizardComplete}
@@ -72,9 +72,9 @@ export const TokenManager: React.FC<TokenManagerProps> = ({
         <>
           {/* Wizard Featured Banner */}
           {showWizardBanner && (
-            <div style={{ padding: '24px 24px 0 24px' }}>
+            <div style={{ padding: '0px' }}>
               <div style={{ 
-                padding: '16px 20px',
+                padding: '12px 20px 20px 20px',
                 background: '#4F7FFF',
                 borderRadius: '12px',
                 position: 'relative',
@@ -108,41 +108,23 @@ export const TokenManager: React.FC<TokenManagerProps> = ({
                   <X size={14} />
                 </button>
                 
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '16px'
-                }}>
-                  <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
+                <div>
+                  <h3 style={{ 
+                    fontSize: '16px', 
+                    fontWeight: 700, 
+                    color: 'white',
+                    marginBottom: '4px'
                   }}>
-                    <Wand2 size={24} color="white" />
-                  </div>
-                  
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ 
-                      fontSize: '16px', 
-                      fontWeight: 700, 
-                      marginBottom: '4px',
-                      color: 'white'
-                    }}>
-                      ✨ Token Setup Wizard
-                    </h3>
-                    <p style={{ 
-                      fontSize: '13px', 
-                      color: 'rgba(255, 255, 255, 0.95)',
-                      lineHeight: '1.5'
-                    }}>
-                      Need help setting up your tokens? The wizard will guide you through creating a complete token system in minutes.
-                    </p>
-                  </div>
+                    Token Setup Wizard
+                  </h3>
+                  <p style={{ 
+                    fontSize: '13px', 
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    lineHeight: '1.5',
+                    marginBottom: '12px'
+                  }}>
+                    Need help setting up your tokens? The wizard will guide you through creating a complete token system in minutes.
+                  </p>
                   
                   <button
                     onClick={() => setShowWizard(true)}
@@ -156,9 +138,7 @@ export const TokenManager: React.FC<TokenManagerProps> = ({
                       transition: 'all 0.2s',
                       background: 'white',
                       color: '#4F7FFF',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-1px)';
@@ -177,7 +157,7 @@ export const TokenManager: React.FC<TokenManagerProps> = ({
           )}
 
           {/* View Tabs */}
-          <div style={{ padding: showWizardBanner ? '0 24px' : '24px 24px 0 24px' }}>
+          <div style={{ padding: showWizardBanner ? '0px' : '0px' }}>
             <div
               style={{
                 display: 'flex',
@@ -185,7 +165,7 @@ export const TokenManager: React.FC<TokenManagerProps> = ({
                 alignItems: 'center',
                 gap: '4px',
                 whiteSpace: 'nowrap',
-                paddingBottom: '6px',
+                paddingBottom: '16px',
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 WebkitOverflowScrolling: 'touch'
@@ -226,7 +206,7 @@ export const TokenManager: React.FC<TokenManagerProps> = ({
           </div>
 
           {/* View Content */}
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '24px 24px 0 24px', backgroundColor: '#F5F7FB' }} className="no-scrollbar">
+          <div style={{ flex: 1, overflowY: 'auto', borderRadius: '12px', overflowX: 'hidden', padding: '0px', backgroundColor: '#F5F7FB' }} className="no-scrollbar">
             {currentView === 'semantic' && (
               <SemanticTokens
                 baseTokens={generatedTokens}

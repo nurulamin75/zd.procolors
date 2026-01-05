@@ -141,19 +141,37 @@ export const downloadFile = (content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url);
 };
 
-// Copy to clipboard function
-export const copyToClipboard = (content: string): Promise<void> => {
-  return navigator.clipboard.writeText(content).catch(() => {
-    // Fallback for older browsers
-    const textArea = document.createElement("textarea");
-    textArea.value = content;
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textArea);
-  });
+// Copy to clipboard function - works in Figma plugin iframe
+export const copyToClipboard = async (content: string): Promise<void> => {
+  try {
+    // Try the modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(content);
+      return;
+    }
+  } catch (e) {
+    // Clipboard API failed, try fallback
+  }
+  
+  // Fallback using execCommand
+  const textArea = document.createElement("textarea");
+  textArea.value = content;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-9999px';
+  textArea.style.top = '0';
+  textArea.style.opacity = '0';
+  textArea.setAttribute('readonly', '');
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+  } catch (err) {
+    console.error('Copy failed:', err);
+  }
+  
+  document.body.removeChild(textArea);
 };
 
 export const downloadTokens = (palettes: Record<string, ColorToken[]>) => {

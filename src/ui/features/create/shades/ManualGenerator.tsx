@@ -17,6 +17,7 @@ interface ManualGeneratorProps {
   customColors?: Record<string, string>;
   onAddCustomColor?: (name: string, color: string) => void;
   onDeleteCustomColor?: (name: string) => void;
+  onRenameColor?: (oldName: string, newName: string) => void;
 }
 
 export const ManualGenerator: React.FC<ManualGeneratorProps> = ({
@@ -29,7 +30,8 @@ export const ManualGenerator: React.FC<ManualGeneratorProps> = ({
   onUpdateScale,
   customColors = {},
   onAddCustomColor,
-  onDeleteCustomColor
+  onDeleteCustomColor,
+  onRenameColor
 }) => {
   const [customColorInput, setCustomColorInput] = useState('');
   const [customColorName, setCustomColorName] = useState('');
@@ -114,6 +116,7 @@ export const ManualGenerator: React.FC<ManualGeneratorProps> = ({
         }}>
           {allColors.map(([name, value]) => {
             const isCustom = customColors[name] !== undefined;
+            const isPrimary = name === 'primary';
             return (
               <ColorInput
                 key={name}
@@ -121,7 +124,10 @@ export const ManualGenerator: React.FC<ManualGeneratorProps> = ({
                 value={value}
                 onChange={(val) => onColorChange(name, val)}
                 isCustom={isCustom}
-                onDelete={isCustom && onDeleteCustomColor ? () => onDeleteCustomColor(name) : undefined}
+                canDelete={!isPrimary} // Can delete all colors except primary
+                canRename={!isPrimary} // Can rename all colors except primary
+                onDelete={onDeleteCustomColor ? () => onDeleteCustomColor(name) : undefined}
+                onNameChange={onRenameColor ? (newName) => onRenameColor(name, newName) : undefined}
               />
             );
           })}
