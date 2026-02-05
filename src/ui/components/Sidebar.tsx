@@ -7,7 +7,7 @@ import {
   PlusCircle, Globe, ArrowRightLeft, FlaskConical,
   PanelRightOpen, Sparkles, Building2,
   Blend, Spline, Droplets, FileCode, BookOpen,
-  SwatchBook, Pipette, BarChart3, Thermometer
+  SwatchBook, Pipette, BarChart3, Thermometer, Bot
 } from 'lucide-react';
 import logo from '../logo.png';
 import markIcon from '../mark.png';
@@ -23,6 +23,7 @@ const NAV_STRUCTURE = [
     label: 'Create',
     icon: PlusCircle,
     items: [
+      { id: 'ai-generator', label: 'AI Generator', icon: Bot },
       { id: 'generator', label: 'Shades', icon: SwatchBook },
       { id: 'tokens', label: 'Tokens', icon: Sparkles },
       { id: 'themes', label: 'Themes', icon: Layers },

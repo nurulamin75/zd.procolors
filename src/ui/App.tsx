@@ -4,6 +4,7 @@ import { DropdownButton } from "./components/DropdownButton";
 import { Sidebar } from "./components/Sidebar";
 
 // Create
+import { AIPaletteModule } from "./features/create/ai";
 import { GeneratorPage } from "./features/create/shades/GeneratorPage";
 import { ThemeGenerator } from "./features/create/themes/ThemeGenerator";
 import { MultiBrand } from "./features/create/multiBrand/MultiBrand";
@@ -157,7 +158,7 @@ const MeshExportDropdown: React.FC = () => {
 };
 
 const App = () => {
-  const [activeModule, setActiveModule] = useState('generator');
+  const [activeModule, setActiveModule] = useState('ai-generator');
 
   const [brands, setBrands] = useState<Brand[]>(() => {
     try {
@@ -576,6 +577,24 @@ const App = () => {
 
   const renderContent = () => {
     switch (activeModule) {
+      case 'ai-generator':
+        return (
+          <AIPaletteModule
+            onColorChange={handleColorChange}
+            onPaletteGenerated={(colors) => {
+              // Update brands with generated colors
+              Object.entries(colors).forEach(([name, color]) => {
+                if (name === 'primary' && isValidColor(color)) {
+                  setBrands(prev => prev.map(b =>
+                    b.id === activeBrandId ? { ...b, primaryColor: color } : b
+                  ));
+                } else if (isValidColor(color)) {
+                  handleColorChange(name, color);
+                }
+              });
+            }}
+          />
+        );
       case 'generator':
         return (
           <GeneratorPage
@@ -673,7 +692,8 @@ const App = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <h1 style={{ fontSize: '18px', margin: 0 }}>
-                {activeModule === 'generator' ? 'Generate Shades' :
+                {activeModule === 'ai-generator' ? 'AI Color Generator' :
+                  activeModule === 'generator' ? 'Generate Shades' :
                   activeModule === 'mesh-gradient' ? 'Create Mesh Gradient' :
                   activeModule === 'themes' ? 'Create Theme' :
                   activeModule === 'preview' ? 'Preview Palette' :
@@ -765,10 +785,19 @@ const App = () => {
                 Configure application preferences and settings
               </p>
             )}
+            {activeModule === 'ai-generator' && (
+              <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
+                Generate color palettes using AI. Describe your brand or color preferences.
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {activeModule === 'mesh-gradient' ? (
+            {activeModule === 'ai-generator' ? (
+              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                Chat with AI to generate color palettes
+              </div>
+            ) : activeModule === 'mesh-gradient' ? (
               <MeshExportDropdown />
             ) : activeModule === 'color-ops' ? (
               <button
