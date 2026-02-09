@@ -6,13 +6,19 @@ import { generateSemanticPalette } from '../../../../utils/tokens';
 interface AIPaletteModuleProps {
   onColorChange?: (name: string, color: string) => void;
   onPaletteGenerated?: (colors: Record<string, string>) => void;
-  onNavigateToGenerator?: () => void;
+  onNavigate?: (module: string) => void;
+  showHistory?: boolean;
+  triggerNewChat?: number;
+  onToggleHistory?: () => void;
 }
 
 export const AIPaletteModule: React.FC<AIPaletteModuleProps> = ({
   onColorChange,
   onPaletteGenerated,
-  onNavigateToGenerator,
+  onNavigate,
+  showHistory,
+  triggerNewChat,
+  onToggleHistory,
 }) => {
   const [generatedColors, setGeneratedColors] = useState<Record<string, string>>({});
 
@@ -51,8 +57,14 @@ export const AIPaletteModule: React.FC<AIPaletteModuleProps> = ({
   };
 
   return (
-    <div style={{ padding: '20px', height: '100%' }}>
-      <AIColorGenerator onColorsGenerated={handleColorsGenerated} />
+    <div style={{ padding: '0', height: '100%' }}>
+      <AIColorGenerator 
+        onColorsGenerated={handleColorsGenerated} 
+        onNavigate={onNavigate}
+        showHistory={showHistory}
+        triggerNewChat={triggerNewChat}
+        onToggleHistory={onToggleHistory}
+      />
     </div>
   );
 };

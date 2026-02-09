@@ -2972,6 +2972,151 @@ figma.ui.onmessage = async (msg) => {
     return;
   }
 
+  // Get colors from Figma selection for AI module
+  if (msg.type === 'get-selection-colors') {
+    (async () => {
+      const selection = figma.currentPage.selection;
+      
+      if (selection.length === 0) {
+        figma.ui.postMessage({ type: 'selection-colors', colors: [] });
+        return;
+      }
+
+      const colors: string[] = [];
+      
+      const extractColorsFromNode = (node: SceneNode) => {
+        // Check for fills
+        if ('fills' in node && Array.isArray(node.fills)) {
+          for (const fill of node.fills) {
+            if (fill.type === 'SOLID' && fill.visible !== false) {
+              const hex = rgbToHex(fill.color.r, fill.color.g, fill.color.b).toUpperCase();
+              if (!colors.includes(hex)) {
+                colors.push(hex);
+              }
+            }
+          }
+        }
+        
+        // Check for strokes
+        if ('strokes' in node && Array.isArray(node.strokes)) {
+          for (const stroke of node.strokes) {
+            if (stroke.type === 'SOLID' && stroke.visible !== false) {
+              const hex = rgbToHex(stroke.color.r, stroke.color.g, stroke.color.b).toUpperCase();
+              if (!colors.includes(hex)) {
+                colors.push(hex);
+              }
+            }
+          }
+        }
+        
+        // Recursively check children
+        if ('children' in node) {
+          for (const child of (node as FrameNode | GroupNode).children) {
+            extractColorsFromNode(child);
+          }
+        }
+      };
+      
+      for (const node of selection) {
+        extractColorsFromNode(node);
+        // Limit to 10 colors
+        if (colors.length >= 10) break;
+      }
+      
+      figma.ui.postMessage({ type: 'selection-colors', colors: colors.slice(0, 10) });
+    })();
+    return;
+  }
+
+  // Create Figma variables from AI-generated colors
+  if (msg.type === 'create-color-variables-from-ai') {
+    (async () => {
+      if (!figma.variables) {
+        figma.notify("Error: Variables API is not available in this file.");
+        return;
+      }
+
+      const { colors } = msg;
+      if (!colors || !Array.isArray(colors) || colors.length === 0) {
+        figma.notify("No colors to create variables from.");
+        return;
+      }
+
+      // Semantic names for AI-generated colors
+      const colorNames = ['Primary', 'Secondary', 'Accent', 'Background', 'Surface', 'Text', 'Muted', 'Border', 'Highlight', 'Shadow'];
+
+      try {
+        const timestamp = new Date().toLocaleString('en-GB', { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+        const collection = figma.variables.createVariableCollection(`AI Colors (${timestamp})`);
+        const modeId = collection.modes[0].modeId;
+        let count = 0;
+
+        for (let i = 0; i < colors.length; i++) {
+          const hex = colors[i];
+          if (typeof hex !== 'string') continue;
+          
+          try {
+            const name = colorNames[i] || `Color ${i + 1}`;
+            const variableName = `AI Colors/${name}`;
+            const variable = figma.variables.createVariable(variableName, collection, 'COLOR');
+            const rgb = hexToRgb(hex);
+            variable.setValueForMode(modeId, { ...rgb, a: 1 });
+            count++;
+          } catch (varErr: any) {
+            console.error(`Error creating variable:`, varErr);
+          }
+        }
+
+        figma.notify(`Success! Created ${count} color variables from AI palette.`);
+      } catch (err: any) {
+        console.error("Error creating AI color variables:", err);
+        figma.notify(`Error: ${err.message}`);
+      }
+    })();
+    return;
+  }
+
+  // Create Figma color styles from AI-generated colors
+  if (msg.type === 'create-color-styles-from-ai') {
+    (async () => {
+      const { colors } = msg;
+      if (!colors || !Array.isArray(colors) || colors.length === 0) {
+        figma.notify("No colors to create styles from.");
+        return;
+      }
+
+      // Semantic names for AI-generated colors
+      const colorNames = ['Primary', 'Secondary', 'Accent', 'Background', 'Surface', 'Text', 'Muted', 'Border', 'Highlight', 'Shadow'];
+
+      try {
+        let count = 0;
+
+        for (let i = 0; i < colors.length; i++) {
+          const hex = colors[i];
+          if (typeof hex !== 'string') continue;
+          
+          try {
+            const name = colorNames[i] || `Color ${i + 1}`;
+            const styleName = `AI Colors/${name}`;
+            const style = figma.createPaintStyle();
+            style.name = styleName;
+            const rgb = hexToRgb(hex);
+            style.paints = [{ type: 'SOLID', color: rgb }];
+            count++;
+          } catch (styleErr: any) {
+            console.error(`Error creating style:`, styleErr);
+          }
+        }
+
+        figma.notify(`Success! Created ${count} color styles from AI palette.`);
+      } catch (err: any) {
+        console.error("Error creating AI color styles:", err);
+        figma.notify(`Error: ${err.message}`);
+      }
+    })();
+    return;
+  }
+
   if (msg.type === 'close') {
     figma.closePlugin();
   }

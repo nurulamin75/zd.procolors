@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ManualGenerator } from './ManualGenerator';
 import { HarmonyPanel } from './harmony/HarmonyPanel';
+import { ImportColors } from './ImportColors';
 import { ColorToken } from '../../../../utils/tokens';
-import { SlidersHorizontal, Palette, Image as ImageIcon } from 'lucide-react';
+import { SlidersHorizontal, Palette, Image as ImageIcon, Upload } from 'lucide-react';
 import { ImageExtractor } from '../../../features/flow/extractor/ImageExtractor';
 
 interface GeneratorPageProps {
@@ -32,7 +33,7 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
   onDeleteCustomColor,
   onRenameColor
 }) => {
-  const [activeTab, setActiveTab] = useState<'manual' | 'harmony' | 'extract'>('manual');
+  const [activeTab, setActiveTab] = useState<'manual' | 'harmony' | 'extract' | 'import'>('manual');
 
   const handleApplyHarmony = (colors: string[]) => {
     const targets = ['primary', 'secondary', 'neutral', 'info', 'success', 'warning', 'error'];
@@ -121,6 +122,27 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
             <ImageIcon size={14} />
             Extract from Image
           </button>
+          <button
+            onClick={() => setActiveTab('import')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 16px',
+              borderRadius: '100px',
+              fontSize: '13px',
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              background: activeTab === 'import' ? 'white' : 'transparent',
+              color: activeTab === 'import' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+              boxShadow: activeTab === 'import' ? 'var(--shadow-sm)' : 'none'
+            }}
+          >
+            <Upload size={14} />
+            Import
+          </button>
         </div>
       </div>
 
@@ -140,7 +162,7 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
         />
       ) : activeTab === 'harmony' ? (
         <HarmonyPanel onApply={handleApplyHarmony} />
-      ) : (
+      ) : activeTab === 'extract' ? (
         <ImageExtractor
           onColorSelect={onColorChange}
           onApplyColors={(colors) => {
@@ -149,6 +171,27 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
             colors.forEach((color, index) => {
               if (index < targets.length) {
                 onColorChange(targets[index], color);
+              }
+            });
+            // Switch back to manual input tab to see the applied colors
+            setActiveTab('manual');
+          }}
+        />
+      ) : (
+        <ImportColors
+          onColorsImported={(colors) => {
+            // Apply imported colors to available color slots
+            const targets = ['primary', 'secondary', 'neutral', 'info', 'success', 'warning', 'error'];
+            colors.forEach((item, index) => {
+              if (index < targets.length) {
+                // Use the color name if it matches a target, otherwise use by index
+                const targetName = targets.find(t => t.toLowerCase() === item.name.toLowerCase()) || targets[index];
+                if (targetName) {
+                  onColorChange(targetName, item.color);
+                }
+              } else if (onAddCustomColor) {
+                // Add as custom color if we have more colors than targets
+                onAddCustomColor(item.name, item.color);
               }
             });
             // Switch back to manual input tab to see the applied colors

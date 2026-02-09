@@ -8,21 +8,9 @@ export interface ChatMessage {
   content: string;
 }
 
-export interface OpenRouterResponse {
-  id: string;
-  model: string;
-  choices: Array<{
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }>;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
+export interface ProxyResponse {
+  content: string;
+  model?: string;
 }
 
 /**
@@ -99,106 +87,36 @@ export function extractColors(text: string): string[] {
 }
 
 /**
- * Try a single model and return the response
- */
-async function tryModel(
-  model: string,
-  messages: ChatMessage[],
-  apiKey: string
-): Promise<{ success: boolean; content?: string; error?: string }> {
-  try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'ProColors - AI Color Generator',
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature: 0.8,
-        max_tokens: 1000,
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-      return { 
-        success: false, 
-        error: errorData.error?.message || `HTTP ${response.status}` 
-      };
-    }
-    
-    const data: OpenRouterResponse = await response.json();
-    
-    if (data.choices && data.choices.length > 0 && data.choices[0].message.content) {
-      return { success: true, content: data.choices[0].message.content };
-    }
-    
-    return { success: false, error: 'Empty response from model' };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Network error' 
-    };
-  }
-}
-
-/**
- * Call OpenRouter API with automatic fallback to multiple free models
- * Tries each model in sequence until one succeeds
+ * Call the Vercel proxy which handles OpenRouter, models and fallback.
+ * This keeps API keys on the server and out of the client bundle.
  */
 export async function callOpenRouter(
-  messages: ChatMessage[],
-  apiKey?: string,
-  onModelChange?: (modelName: string) => void
-): Promise<string> {
-  const key = apiKey || '';
-  
-  if (!key) {
-    throw new Error('OpenRouter API key is required. Please set it in settings.');
-  }
-  
-  const errors: string[] = [];
-  
-  // Try each free model in sequence
-  for (const model of FREE_MODELS) {
-    onModelChange?.(model.name);
-    
-    const result = await tryModel(model.id, messages, key);
-    
-    if (result.success && result.content) {
-      console.log(`✓ Success with model: ${model.name}`);
-      return result.content;
-    }
-    
-    console.warn(`✗ Failed with ${model.name}: ${result.error}`);
-    errors.push(`${model.name}: ${result.error}`);
-  }
-  
-  // All models failed
-  throw new Error(
-    `All AI models failed to respond. Please try again later.\n\nDetails:\n${errors.join('\n')}`
-  );
-}
+  messages: ChatMessage[]
+): Promise<ProxyResponse> {
+  const endpoint = 'https://procolors-proxy.vercel.app/api/colors';
 
-/**
- * Call OpenRouter API with a specific model (no fallback)
- */
-export async function callOpenRouterWithModel(
-  messages: ChatMessage[],
-  modelId: string,
-  apiKey: string
-): Promise<string> {
-  const result = await tryModel(modelId, messages, apiKey);
-  
-  if (result.success && result.content) {
-    return result.content;
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messages }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message =
+      (errorData && (errorData.error || errorData.message)) ||
+      `HTTP ${response.status}`;
+    throw new Error(message);
   }
-  
-  throw new Error(result.error || 'Failed to get response from AI model');
+
+  const data: ProxyResponse = await response.json();
+  if (!data.content) {
+    throw new Error('Empty response from AI proxy');
+  }
+
+  return data;
 }
 
 /**

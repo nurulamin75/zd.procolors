@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Figma, X, Download, ChevronDown, Frame, Image, Info } from "lucide-react";
+import { Figma, X, Download, ChevronDown, Frame, Image, Info, MessageSquarePlus, History, Bot, Palette, Eye, Building2, Settings, SwatchBook, Sparkles, Layers, Gauge, Blend, Compass, FolderUp, SplitSquareHorizontal, BookOpen, Pipette, CheckCircle2, ScanEye, Thermometer } from "lucide-react";
 import { DropdownButton } from "./components/DropdownButton";
 import { Sidebar } from "./components/Sidebar";
 
@@ -159,6 +159,8 @@ const MeshExportDropdown: React.FC = () => {
 
 const App = () => {
   const [activeModule, setActiveModule] = useState('ai-generator');
+  const [showAIHistory, setShowAIHistory] = useState(false);
+  const [triggerNewChat, setTriggerNewChat] = useState(0); // Trigger for new chat
 
   const [brands, setBrands] = useState<Brand[]>(() => {
     try {
@@ -593,6 +595,10 @@ const App = () => {
                 }
               });
             }}
+            onNavigate={setActiveModule}
+            showHistory={showAIHistory}
+            triggerNewChat={triggerNewChat}
+            onToggleHistory={() => setShowAIHistory(prev => !prev)}
           />
         );
       case 'generator':
@@ -691,8 +697,31 @@ const App = () => {
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Module Icon */}
+              <span style={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center' }}>
+                {activeModule === 'ai-generator' ? <Bot size={20} /> :
+                  activeModule === 'generator' ? <SwatchBook size={20} /> :
+                  activeModule === 'tokens' ? <Sparkles size={20} /> :
+                  activeModule === 'themes' ? <Layers size={20} /> :
+                  activeModule === 'mesh-gradient' ? <Gauge size={20} /> :
+                  activeModule === 'color-ops' ? <Blend size={20} /> :
+                  activeModule === 'brand-colors' ? <Building2 size={20} /> :
+                  activeModule === 'palettes' ? <Palette size={20} /> :
+                  activeModule === 'gradients' ? <Compass size={20} /> :
+                  activeModule === 'transfer' ? <FolderUp size={20} /> :
+                  activeModule === 'brands' ? <SplitSquareHorizontal size={20} /> :
+                  activeModule === 'export' ? <Download size={20} /> :
+                  activeModule === 'documentation' ? <BookOpen size={20} /> :
+                  activeModule === 'extractor' ? <Pipette size={20} /> :
+                  activeModule === 'preview' ? <Eye size={20} /> :
+                  activeModule === 'contrast' ? <CheckCircle2 size={20} /> :
+                  activeModule === 'blindness' ? <ScanEye size={20} /> :
+                  activeModule === 'heatmap' ? <Thermometer size={20} /> :
+                  activeModule === 'settings' ? <Settings size={20} /> :
+                  <SwatchBook size={20} />}
+              </span>
               <h1 style={{ fontSize: '18px', margin: 0 }}>
-                {activeModule === 'ai-generator' ? 'AI Color Generator' :
+                {activeModule === 'ai-generator' ? 'Colzen AI' :
                   activeModule === 'generator' ? 'Generate Shades' :
                   activeModule === 'mesh-gradient' ? 'Create Mesh Gradient' :
                   activeModule === 'themes' ? 'Create Theme' :
@@ -785,18 +814,44 @@ const App = () => {
                 Configure application preferences and settings
               </p>
             )}
-            {activeModule === 'ai-generator' && (
-              <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
-                Generate color palettes using AI. Describe your brand or color preferences.
-              </p>
-            )}
           </div>
 
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {activeModule === 'ai-generator' ? (
-              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                Chat with AI to generate color palettes
-              </div>
+              <>
+                <button
+                  onClick={() => setShowAIHistory(!showAIHistory)}
+                  className="btn btn-secondary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    background: showAIHistory ? '#6366f1' : undefined,
+                    color: showAIHistory ? 'white' : undefined,
+                    borderColor: showAIHistory ? '#6366f1' : undefined,
+                  }}
+                >
+                  <History size={16} />
+                  <span>History</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setTriggerNewChat(prev => prev + 1);
+                    setShowAIHistory(false);
+                  }}
+                  className="btn btn-primary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                  }}
+                >
+                  <MessageSquarePlus size={16} />
+                  <span>New</span>
+                </button>
+              </>
             ) : activeModule === 'mesh-gradient' ? (
               <MeshExportDropdown />
             ) : activeModule === 'color-ops' ? (

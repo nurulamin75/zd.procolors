@@ -23,7 +23,6 @@ const NAV_STRUCTURE = [
     label: 'Create',
     icon: PlusCircle,
     items: [
-      { id: 'ai-generator', label: 'AI Generator', icon: Bot },
       { id: 'generator', label: 'Shades', icon: SwatchBook },
       { id: 'tokens', label: 'Tokens', icon: Sparkles },
       { id: 'themes', label: 'Themes', icon: Layers },
@@ -69,8 +68,16 @@ const NAV_STRUCTURE = [
     label: 'Settings',
     icon: Settings,
     items: [] // Placeholder for now
+  },
+  {
+    id: 'ai-generator',
+    label: 'Colzen AI',
+    icon: Bot,
+    items: [], // Standalone item
+    isProminent: true // Special styling flag
   }
 ];
+
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -82,6 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
     explore: false,
     flow: false,
     test: false,
+    'ai-generator': false,
     settings: false
   });
 
@@ -128,17 +136,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
   };
 
   return (
-    <div
-      className="sidebar"
-      style={{
-        width: isCollapsed ? '64px' : '172px',
-        transition: 'width 0.2s ease',
-        overflow: isCollapsed ? 'visible' : undefined,
-        overflowY: isCollapsed ? 'auto' : 'auto',
-        overflowX: isCollapsed ? 'visible' : 'hidden',
-        position: 'relative'
-      }}
-    >
+    <>
+      <div
+        className="sidebar"
+        style={{
+          width: isCollapsed ? '64px' : '172px',
+          transition: 'width 0.2s ease',
+          overflow: isCollapsed ? 'visible' : undefined,
+          overflowY: isCollapsed ? 'auto' : 'auto',
+          overflowX: isCollapsed ? 'visible' : 'hidden',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
       <div style={{
         padding: '16px 8px',
         display: 'flex',
@@ -176,7 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'var(--color-text-secondary)',
-                borderRadius: '4px',
+                borderRadius: '100px',
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={(e) => {
@@ -196,7 +207,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
       {/* Submenu portal for collapsed sidebar */}
       {isCollapsed && hoveredGroup && submenuPosition && (() => {
         const group = NAV_STRUCTURE.find(g => g.id === hoveredGroup);
-        if (!group || group.id === 'settings' || group.items.length === 0) return null;
+        if (!group || group.id === 'settings' || group.id === 'ai-generator' || group.items.length === 0) return null;
 
         return (
           <div
@@ -286,13 +297,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
           flexDirection: 'column',
           gap: '4px',
           position: 'relative',
-          overflow: isCollapsed ? 'visible' : undefined
+          overflow: isCollapsed ? 'visible' : undefined,
+          flex: 1,
+          paddingBottom: '16px'
         }}
       >
         {NAV_STRUCTURE.map((group) => {
           const isOpen = groupStates[group.id];
-          const isActiveGroup = group.items.some(item => item.id === activeModule);
+          const isActiveGroup = group.items.some(item => item.id === activeModule) || (group.id === 'ai-generator' && activeModule === 'ai-generator');
           const isSettings = group.id === 'settings';
+          const isAI = group.id === 'ai-generator';
+          const isStandaloneItem = isSettings || isAI;
           const GroupIcon = group.icon;
 
           if (isCollapsed) {
@@ -304,8 +319,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
                   menuItemRefs.current[group.id] = el;
                 }}
                 style={{
-                  marginBottom: '4px',
-                  position: 'relative'
+                  marginBottom: isAI ? '8px' : '4px',
+                  marginTop: isAI ? 'auto' : undefined,
+                  paddingTop: isAI ? '24px' : undefined,
+                  position: 'relative',
+                  display: 'flex',
+                  justifyContent: 'center'
                 }}
                 onMouseEnter={() => {
                   setHoveredGroup(group.id);
@@ -323,10 +342,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
                   // as requested by the user.
                 }}
               >
+                {isAI && (
+                  <div
+                    className="ai-button-glow"
+                    style={{
+                      position: 'absolute',
+                      borderRadius: '50%',
+                      opacity: 0.8,
+                      zIndex: 0
+                    }}
+                  />
+                )}
                 <div
                   onClick={() => {
-                    if (isSettings) {
-                      onChangeModule('settings');
+                    if (isStandaloneItem) {
+                      onChangeModule(group.id);
                     } else {
                       // In collapsed mode, clicking icon opens group and selects first item
                       if (!isOpen) {
@@ -344,65 +374,105 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '8px',
+                    width: isAI ? '32px' : undefined,
+                    height: isAI ? '32px' : undefined,
+                    padding: isAI ? '0' : '8px',
                     cursor: 'pointer',
                     userSelect: 'none',
-                    color: (isActiveGroup || (isSettings && activeModule === 'settings')) ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                    borderRadius: '6px',
-                    transition: 'background-color 0.2s',
-                    backgroundColor: (isActiveGroup || (isSettings && activeModule === 'settings')) ? '#f3f4f6' : 'transparent'
+                    color: isAI ? 'white' : (isActiveGroup ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'),
+                    borderRadius: isAI ? '50%' : '6px',
+                    transition: 'all 0.2s',
+                    background: isAI 
+                      ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)'
+                      : (isActiveGroup ? '#f3f4f6' : 'transparent'),
+                    boxShadow: isAI ? '0 2px 8px rgba(99, 102, 241, 0.3)' : 'none',
+                    position: 'relative',
+                    zIndex: 1
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActiveGroup && !(isSettings && activeModule === 'settings')) {
+                    if (isAI) {
+                      e.currentTarget.style.transform = 'scale(1.08)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(99, 102, 241, 0.5)';
+                    } else if (!isActiveGroup) {
                       e.currentTarget.style.backgroundColor = '#f9fafb';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActiveGroup && !(isSettings && activeModule === 'settings')) {
+                    if (isAI) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(99, 102, 241, 0.3)';
+                    } else if (!isActiveGroup) {
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }
                   }}
                   title={group.label}
                 >
-                  {GroupIcon && <GroupIcon size={18} />}
+                  {GroupIcon && <GroupIcon size={isAI ? 22 : 18} />}
                 </div>
               </div>
             );
           }
 
           return (
-            <div key={group.id} style={{ marginBottom: '4px' }}>
+            <div key={group.id} style={{ marginBottom: '4px', marginTop: isAI ? 'auto' : undefined, paddingTop: isAI ? '24px' : undefined, position: 'relative' }}>
+              {/* Animated border glow for AI */}
+              {isAI && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '22px -2px -2px -2px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #6366f1, #a855f7, #ec4899, #6366f1)',
+                    backgroundSize: '300% 300%',
+                    animation: 'gradient-rotate 3s ease infinite',
+                    opacity: 0.8,
+                    filter: 'blur(3px)',
+                    zIndex: 0
+                  }}
+                />
+              )}
               {/* Group Header */}
               <div
-                onClick={() => isSettings ? onChangeModule('settings') : toggleGroup(group.id)}
+                onClick={() => isStandaloneItem ? onChangeModule(group.id) : toggleGroup(group.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '8px 8px',
+                  padding: isAI ? '10px 12px' : '8px 8px',
                   cursor: 'pointer',
                   userSelect: 'none',
-                  color: (isActiveGroup || (isSettings && activeModule === 'settings')) ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                  borderRadius: '6px',
-                  transition: 'background-color 0.2s',
-                  backgroundColor: (isActiveGroup || (isSettings && activeModule === 'settings')) ? '#f3f4f6' : 'transparent'
+                  color: isAI ? 'white' : (isActiveGroup ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'),
+                  borderRadius: isAI ? '12px' : '6px',
+                  transition: 'all 0.2s',
+                  background: isAI 
+                    ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)'
+                    : (isActiveGroup ? '#f3f4f6' : 'transparent'),
+                  boxShadow: isAI ? '0 2px 8px rgba(99, 102, 241, 0.3)' : 'none',
+                  position: 'relative',
+                  zIndex: 1
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActiveGroup && !(isSettings && activeModule === 'settings')) {
+                  if (isAI) {
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.4)';
+                  } else if (!isActiveGroup) {
                     e.currentTarget.style.backgroundColor = '#f9fafb';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActiveGroup && !(isSettings && activeModule === 'settings')) {
+                  if (isAI) {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(99, 102, 241, 0.3)';
+                  } else if (!isActiveGroup) {
                     e.currentTarget.style.backgroundColor = 'transparent';
                   }
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600 }}>
-                  {GroupIcon && <GroupIcon size={16} />}
+                  {GroupIcon && <GroupIcon size={isAI ? 18 : 16} />}
                   <span>{group.label}</span>
                 </div>
-                {!isSettings && (
+                {!isStandaloneItem && (
                   <div style={{ color: 'var(--color-text-tertiary)' }}>
                     {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </div>
@@ -410,7 +480,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
               </div>
 
               {/* Group Items */}
-              {isOpen && !isSettings && (
+              {isOpen && !isStandaloneItem && (
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -464,5 +534,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onChangeModule }
         })}
       </div>
     </div>
+    </>
   );
 };

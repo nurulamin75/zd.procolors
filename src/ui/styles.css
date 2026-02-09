@@ -62,7 +62,7 @@ body {
   min-width: 64px;
   display: flex;
   flex-direction: column;
-  padding: 0 var(--spacing-sm) var(--spacing-lg) var(--spacing-sm);
+  padding: 0 var(--spacing-sm) 0 var(--spacing-sm);
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 10;
@@ -79,7 +79,7 @@ body {
 .content-scroll-area {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 20px 20px 20px 20px;
   background-color: #F5F7FB;
   border-radius: 16px;
   margin-right: 8px;
